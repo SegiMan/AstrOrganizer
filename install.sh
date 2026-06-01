@@ -10,11 +10,12 @@ APP_DIR="$INSTALL_ROOT/app"
 VENV_DIR="$INSTALL_ROOT/venv"
 BIN_DIR="$HOME/.local/bin"
 DESKTOP_DIR="$HOME/.local/share/applications"
-ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
+ICON_DIR_256="$HOME/.local/share/icons/hicolor/256x256/apps"
+ICON_DIR_512="$HOME/.local/share/icons/hicolor/512x512/apps"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG="$INSTALL_ROOT/install.log"
 
-mkdir -p "$INSTALL_ROOT" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR"
+mkdir -p "$INSTALL_ROOT" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR_256" "$ICON_DIR_512"
 exec > >(tee -a "$LOG") 2>&1
 
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -187,8 +188,12 @@ else
   find "$APP_DIR" -type f -name '*.pyc' -delete || true
 fi
 
+echo "==> Installing application icon..."
 if [ -f "$APP_DIR/assets/astrorganizer.png" ]; then
-  cp "$APP_DIR/assets/astrorganizer.png" "$ICON_DIR/astrorganizer.png"
+  cp "$APP_DIR/assets/astrorganizer.png" "$ICON_DIR_256/astrorganizer.png"
+  cp "$APP_DIR/assets/astrorganizer.png" "$ICON_DIR_512/astrorganizer.png"
+else
+  echo "WARNING: Icon file not found: $APP_DIR/assets/astrorganizer.png"
 fi
 
 cat > "$BIN_DIR/$APP_CMD" <<EOF2
@@ -201,8 +206,17 @@ chmod +x "$BIN_DIR/$APP_CMD"
 sed "s#__EXEC__#$BIN_DIR/$APP_CMD#g" "$APP_DIR/desktop/astrorganizer.desktop.in" > "$DESKTOP_DIR/astrorganizer.desktop"
 chmod +x "$DESKTOP_DIR/astrorganizer.desktop"
 
-if have update-desktop-database; then update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true; fi
-if have gtk-update-icon-cache; then gtk-update-icon-cache "$HOME/.local/share/icons/hicolor" >/dev/null 2>&1 || true; fi
+echo "==> Refreshing desktop and icon caches..."
+if have update-desktop-database; then
+  update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
+fi
+
+if have gtk-update-icon-cache; then
+  gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" >/dev/null 2>&1 || true
+fi
+
+touch "$DESKTOP_DIR/astrorganizer.desktop" || true
+touch "$HOME/.local/share/icons/hicolor" || true
 
 echo "==> Verifying installation..."
 cd "$APP_DIR" || exit 1
