@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AstrOrganizer
+Comment=Tabbed, tag-aware file organizer for Linux
+Exec=__EXEC__ %U
+Icon=astrorganizer
+Terminal=false
+Categories=Utility;FileManager;Qt;
+MimeType=inode/directory;
+StartupNotify=true
